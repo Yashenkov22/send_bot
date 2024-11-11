@@ -14,7 +14,7 @@ from aiogram.fsm.context import FSMContext
 from pyrogram import Client
 
 from sqlalchemy.orm import Session, joinedload, sessionmaker
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, select, update, or_
 
 from config import BEARER_TOKEN, FEEDBACK_REASON_PREFIX
 
@@ -171,17 +171,23 @@ async def test_send(session: Session,
     MODER_CHANNEL_ID = '-1002435890346'
     _limit = 4
 
-    DB_DATA = Base.classes.general_models_customorder
+    CustomOrder = Base.classes.general_models_customorder
     Guest = Base.classes.general_models_guest
 
     query = (
         select(
-            DB_DATA,
+            CustomOrder,
             Guest,
         )\
         .join(Guest,
-              DB_DATA.guest_id == Guest.tg_id)\
-        .order_by(DB_DATA.time_create.asc())\
+              CustomOrder.guest_id == Guest.tg_id)\
+        .where(
+            or_(
+                CustomOrder.moderation == False,
+                CustomOrder.status != 'Завершен',
+                )
+        )\
+        .order_by(CustomOrder.time_create.asc())\
     )
 
     res = session.execute(query)
