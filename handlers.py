@@ -187,8 +187,7 @@ async def test_send(user_id: int,
                 CustomOrder.guest_id == Guest.tg_id)\
             .where(
                 or_(
-                    CustomOrder.moderation == False,
-                    CustomOrder.status != 'Завершен',
+                    CustomOrder.id == order_id,
                     )
             )\
             .order_by(CustomOrder.time_create.asc())\
