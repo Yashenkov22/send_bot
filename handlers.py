@@ -166,7 +166,10 @@ async def start(message: types.Message | types.CallbackQuery,
         pass
 
 
-async def test_send(session: Session,
+async def test_send(user_id: int,
+                    order_id: int,
+                    marker: str,
+                    session: Session,
                     bot: Bot):
     MODER_CHANNEL_ID = '-1002435890346'
     _limit = 4
@@ -174,83 +177,86 @@ async def test_send(session: Session,
     CustomOrder = Base.classes.general_models_customorder
     Guest = Base.classes.general_models_guest
 
-    query = (
-        select(
-            CustomOrder,
-            Guest,
-        )\
-        .join(Guest,
-              CustomOrder.guest_id == Guest.tg_id)\
-        .where(
-            or_(
-                CustomOrder.moderation == False,
-                CustomOrder.status != 'Завершен',
-                )
-        )\
-        .order_by(CustomOrder.time_create.asc())\
-    )
+    if marker == 'swift/sepa':
+        query = (
+            select(
+                CustomOrder,
+                Guest,
+            )\
+            .join(Guest,
+                CustomOrder.guest_id == Guest.tg_id)\
+            .where(
+                or_(
+                    CustomOrder.moderation == False,
+                    CustomOrder.status != 'Завершен',
+                    )
+            )\
+            .order_by(CustomOrder.time_create.asc())\
+        )
 
-    res = session.execute(query)
+        res = session.execute(query)
 
-    res = res.fetchall()
+        res = res.fetchall()
 
-    # print(res)
+        # print(res)
 
-    msg_text = '<b>Заявки Swift/Sepa, ожидающие модерации:</b>\n'
+        msg_text = '<b>Новая заявка Swift/Sepa, ожидающая модерации:</b>\n'
 
-    for idx, _tuple in enumerate(res[:_limit], start=1):
-        el, guest = _tuple
-        chat_link = guest.chat_link
-        time_create = el.time_create.astimezone().strftime('%d.%m.%Y %H:%M')
-        el_form = f'''
-{idx}
-Время создания: {time_create}\r
-Тип заявки: {el.request_type}\r
-Пользователь: {el.guest_id}\r
-Ссылка на заявку в <a href="https://api.moneyswap.online/django/admin/general_models/customorder/{el.id}/change/">django admin</a>
-''' 
-        # print(el.__dict__)
-        if chat_link:
-            el_form += f'\rСсылка на чат по этому вопросу: {chat_link}\n'
+        for idx, _tuple in enumerate(res[:_limit], start=1):
+            el, guest = _tuple
+            chat_link = guest.chat_link
+            time_create = el.time_create.astimezone().strftime('%d.%m.%Y %H:%M')
+            el_form = f'''
+    {idx}
+    Время создания: {time_create}\r
+    Тип заявки: {el.request_type}\r
+    Пользователь: {el.guest_id}\r
+    Ссылка на заявку в <a href="https://api.moneyswap.online/django/admin/general_models/customorder/{el.id}/change/">django admin</a>
+    ''' 
+            # print(el.__dict__)
+            if chat_link:
+                el_form += f'\rСсылка на чат по этому вопросу: {chat_link}\n'
+            
+            msg_text += f'\r{el_form}'
         
-        msg_text += f'\r{el_form}'
-    
-    hidden_orders_count = len(res) - _limit
+        hidden_orders_count = len(res) - _limit
 
-    if hidden_orders_count > 0:
-        msg_text += f'\n <b><i>* {hidden_orders_count} элементов не были показаны</i></b>'
+        if hidden_orders_count > 0:
+            msg_text += f'\n <b><i>* {hidden_orders_count} элементов не были показаны</i></b>'
 
-    FeedbackForm = Base.classes.general_models_feedbackform
+    else:
 
-    query = (
-        select(
-            FeedbackForm
-        )\
-        .order_by(FeedbackForm.time_create.asc())\
-    )
+        FeedbackForm = Base.classes.general_models_feedbackform
 
-    res = session.execute(query)
+        query = (
+            select(
+                FeedbackForm
+            )\
+            .order_by(FeedbackForm.time_create.asc())\
+        )
 
-    res = res.scalars().all()
-    
-    msg_text += '\n<b>Формы обратной связи, ожидающие модерации:</b>\n'
+        res = session.execute(query)
 
-    for idx, el in enumerate(res[:_limit], start=1):
-        time_create = el.time_create.astimezone().strftime('%d.%m.%Y %H:%M')
-        el_form = f'''
-{idx}
-Время создания: {time_create}\r
-Тип проблемы: {el.reasons}\r
-Пользователь: {el.username}\r
-Ссылка на заявку в <a href="https://api.moneyswap.online/django/admin/general_models/feedbackform/{el.id}/change/">django admin</a>
-''' 
+        res = res.scalars().all()
+        
+        msg_text += '\n<b>Формы обратной связи, ожидающие модерации:</b>\n'
 
-        msg_text += f'\r{el_form}'
+        for idx, el in enumerate(res[:_limit], start=1):
+            time_create = el.time_create.astimezone().strftime('%d.%m.%Y %H:%M')
+            el_form = f'''
+    {idx}
+    Время создания: {time_create}\r
+    Тип проблемы: {el.reasons}\r
+    Пользователь: {el.username}\r
+    Ссылка на заявку в <a href="https://api.moneyswap.online/django/admin/general_models/feedbackform/{el.id}/change/">django admin</a>
+    ''' 
 
-    hidden_orders_count = len(res) - _limit
+            msg_text += f'\r{el_form}'
 
-    if hidden_orders_count:
-        msg_text += f'\n <b><i>* {hidden_orders_count} элементов не были показаны</i></b>'
+        hidden_orders_count = len(res) - _limit
+
+        if hidden_orders_count:
+            msg_text += f'\n <b><i>* {hidden_orders_count} элементов не были показаны</i></b>'
 
 
     await bot.send_message(chat_id=MODER_CHANNEL_ID,

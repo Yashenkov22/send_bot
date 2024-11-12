@@ -113,8 +113,13 @@ async def bot_webhook(update: dict):
 
 
 @app.get('/send_to_tg_group')
-async def send_to_tg_group():
-    await test_send(session=session(),
+async def send_to_tg_group(user_id: int,
+                           order_id: int,
+                           marker: str):
+    await test_send(user_id=user_id,
+                    order_id=order_id,
+                    marker=marker,
+                    session=session(),
                     bot=bot)
 #Endpoint for mass send message
 # @app.get('/send_mass_message')
