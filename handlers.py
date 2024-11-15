@@ -204,7 +204,8 @@ async def test_send(user_id: int,
         for idx, _tuple in enumerate(res[:_limit], start=1):
             el, guest = _tuple
             chat_link = guest.chat_link
-            time_create = el.time_create.strftime('%d.%m.%Y %H:%M')
+            print(el.time_create)
+            time_create = el.time_create.astimezone().strftime('%d.%m.%Y %H:%M')
             el_form = f'''
     {idx}
     Время создания: {time_create}\r
