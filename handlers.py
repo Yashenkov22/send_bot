@@ -1,6 +1,8 @@
 import os
 import json
 
+import pytz
+
 from datetime import datetime
 
 import aiohttp
@@ -40,7 +42,7 @@ main_router = Router()
 
 start_text = '💱<b>Добро пожаловать в MoneySwap!</b>\n\nНаш бот поможет найти лучшую сделку под вашу задачу 💸\n\n👉🏻 <b>Чтобы начать поиск</b>, выберите категорию “безналичные”, “наличные” или “Swift/Sepa” и нажмите на нужную кнопку ниже.\n\nЕсли есть какие-то вопросы, обращайтесь <a href="https://t.me/MoneySwap_support">Support</a> или <a href="https://t.me/moneyswap_admin">Admin</a>. Мы всегда готовы вам помочь!'
 
-
+moscow_tz = pytz.timezone('Europe/Moscow')
 
 @main_router.message(Command('start'))
 async def start(message: types.Message | types.CallbackQuery,
@@ -205,7 +207,7 @@ async def test_send(user_id: int,
             el, guest = _tuple
             chat_link = guest.chat_link
             print(el.time_create)
-            time_create = el.time_create.astimezone().strftime('%d.%m.%Y %H:%M')
+            time_create = el.time_create.astimezone(moscow_tz).strftime('%d.%m.%Y %H:%M')
             el_form = f'''
     {idx}
     Время создания: {time_create}\r
@@ -242,7 +244,7 @@ async def test_send(user_id: int,
         msg_text += '\n<b>Формы обратной связи, ожидающие модерации:</b>\n'
 
         for idx, el in enumerate(res[:_limit], start=1):
-            time_create = el.time_create.astimezone().strftime('%d.%m.%Y %H:%M')
+            time_create = el.time_create.astimezone(moscow_tz).strftime('%d.%m.%Y %H:%M')
             el_form = f'''
     {idx}
     Время создания: {time_create}\r
