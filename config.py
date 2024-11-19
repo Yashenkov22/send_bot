@@ -24,11 +24,14 @@ DB_PORT = os.environ.get('DB_PORT')
 DB_NAME = os.environ.get('DB_NAME')
 
 
+PGBOUNCER_HOST = os.environ.get('PGBOUNCER_HOST')
+
+
 db_url = URL.create(
     'postgresql+psycopg2',
     username=DB_USER,
     password=DB_PASS,
-    host=DB_HOST,
+    host=PGBOUNCER_HOST,
     port=DB_PORT,
     database=DB_NAME,
 )
